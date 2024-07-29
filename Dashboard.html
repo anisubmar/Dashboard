@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Funding Dashboard</title>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+</head>
+<body>
+    <h1>Donor Funding Dashboard</h1>
+    <!-- Filters -->
+    <div>
+        <label for="countryFilter">Country:</label>
+        <select id="countryFilter">
+            <option value="">All</option>
+        </select>
+
+        <label for="ngoFilter">NGO:</label>
+        <select id="ngoFilter">
+            <option value="">All</option>
+        </select>
+
+        <label for="donorTypeFilter">Donor Type:</label>
+        <select id="donorTypeFilter">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <!-- Table -->
+    <table id="fundingTable" class="display">
+        <thead>
+            <tr>
+                <th>Donor Name</th>
+                <th>Funding Amount</th>
+                <th>Country</th>
+                <th>NGO</th>
+                <th>Donor Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            // Load the data
+            $.getJSON('fcra_data.json', function(data) {
+                // Populate filters
+                let countries = new Set();
+                let ngos = new Set();
+                let donorTypes = new Set();
+
+                data.forEach(item => {
+                    countries.add(item.Country);
+                    ngos.add(item.NGO);
+                    donorTypes.add(item['Donor Type']);
+                });
+
+                countries.forEach(country => {
+                    $('#countryFilter').append(`<option value="${country}">${country}</option>`);
+                });
+
+                ngos.forEach(ngo => {
+                    $('#ngoFilter').append(`<option value="${ngo}">${ngo}</option>`);
+                });
+
+                donorTypes.forEach(type => {
+                    $('#donorTypeFilter').append(`<option value="${type}">${type}</option>`);
+                });
+
+                // Populate table
+                const table = $('#fundingTable').DataTable({
+                    data: data,
+                    columns: [
+                        { data: 'Donor Name' },
+                        { data: 'Funding Amount' },
+                        { data: 'Country' },
+                        { data: 'NGO' },
+                        { data: 'Donor Type' }
+                    ]
+                });
+
+                // Filter function
+                function filterTable() {
+                    const country = $('#countryFilter').val();
+                    const ngo = $('#ngoFilter').val();
+                    const donorType = $('#donorTypeFilter').val();
+
+                    table.clear().draw();
+                    const filteredData = data.filter(item => {
+                        return (!country || item.Country === country) &&
+                               (!ngo || item.NGO === ngo) &&
+                               (!donorType || item['Donor Type'] === donorType);
+                    });
+
+                    table.rows.add(filteredData).draw();
+                }
+
+                // Attach filter event handlers
+                $('#countryFilter').on('change', filterTable);
+                $('#ngoFilter').on('change', filterTable);
+                $('#donorTypeFilter').on('change', filterTable);
+            });
+        });
+    </script>
+</body>
+</html>
